@@ -368,6 +368,7 @@
             </div>
           </div>
           <b-field
+            label="Director/Creator"
             type="is-success"
           >
             <b-taginput
