@@ -1,6 +1,6 @@
 package main
 
-import "view-list/pkg/cmd"
+import "github.com/ryanmccarthy031/view-list/cmd"
 
 func main() {
 	cmd.Execute()

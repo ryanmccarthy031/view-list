@@ -5,7 +5,8 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"view-list/pkg/routes"
+
+	"github.com/ryanmccarthy031/view-list/pkg/routes"
 
 	"github.com/rs/zerolog/log"
 	"github.com/sethvargo/go-envconfig"
