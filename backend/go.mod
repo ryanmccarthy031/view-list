@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/go-chi/chi/v5 v5.0.7
+	github.com/joho/godotenv v1.4.0
 	github.com/rs/zerolog v1.27.0
 	github.com/sethvargo/go-envconfig v0.7.0
 	github.com/spf13/cobra v1.4.0
