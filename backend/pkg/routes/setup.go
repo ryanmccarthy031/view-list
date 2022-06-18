@@ -7,9 +7,10 @@ import (
 
 func Setup() chi.Router {
 	r := chi.NewRouter()
-	r.Post("/get", GetEntry)
-	r.Post("/update", UpdateEntry)
-	r.Post("/create", CreateEntry)
+	r.Post("/api/get", GetEntry)
+	r.Post("/api/ping", WakeUp)
+	r.Post("/api/update", UpdateEntry)
+	r.Post("/api/create", CreateEntry)
 	log.Info().Msg("Setting up routes")
 	return r
 }

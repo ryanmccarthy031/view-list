@@ -8,11 +8,11 @@ require (
 	github.com/rs/zerolog v1.27.0
 	github.com/sethvargo/go-envconfig v0.7.0
 	github.com/spf13/cobra v1.4.0
+	github.com/jomei/notionapi v1.8.5
 )
 
 require (
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
-	github.com/jomei/notionapi v1.8.5 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

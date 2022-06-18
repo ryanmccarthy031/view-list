@@ -22,9 +22,6 @@ export default {
     ]
   },
   env: {
-    notionKey: process.env.NOTION_KEY || '',
-    notionDB: process.env.NOTION_DATABASE || '',
-    notionURL: 'https://api.notion.com',
     tmdbAPIKey: '321afcdc0427d81ef65cd251763df5e9',
     tmdbURL: 'https://api.themoviedb.org/3'
   },

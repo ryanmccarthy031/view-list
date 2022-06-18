@@ -4,72 +4,96 @@
       <h1 class="is-size-1">
         Find a Movie
       </h1>
-      <b-field label="What do you want to watch?">
-        <b-autocomplete
-          :data="data"
-          placeholder="e.g. The Princess Bride"
-          field="title"
-          :loading="isFetching"
-          @typing="getAsyncData"
-          @select="option => selected = option"
+      <div class="columns">
+        <b-field
+          class="column is-four-fifths pb-0 mb-0"
+          label="What do you want to watch?"
         >
-          <template slot-scope="props">
-            <div class="media">
-              <div class="media-left">
-                <img
-                  v-if="props.option.poster_path"
-                  width="32"
-                  :src="`https://image.tmdb.org/t/p/w500/${props.option.poster_path}`"
-                >
-                <b-icon
-                  v-else-if="props.option.media_type==='movie'"
-                  icon="filmstrip"
-                  size="is-medium"
-                />
-                <b-icon
-                  v-else-if="props.option.media_type==='tv'"
-                  icon="television"
-                  size="is-medium"
-                />
+          <b-autocomplete
+            :data="data"
+            placeholder="e.g. The Princess Bride"
+            field="title"
+            :loading="isFetching"
+            @typing="getAsyncData"
+            @select="option => selected = option"
+          >
+            <template slot-scope="props">
+              <div class="media">
+                <div class="media-left">
+                  <img
+                    v-if="props.option.poster_path"
+                    width="32"
+                    :src="`https://image.tmdb.org/t/p/w500/${props.option.poster_path}`"
+                  >
+                  <b-icon
+                    v-else-if="props.option.media_type==='movie'"
+                    icon="filmstrip"
+                    size="is-medium"
+                  />
+                  <b-icon
+                    v-else-if="props.option.media_type==='tv'"
+                    icon="television"
+                    size="is-medium"
+                  />
+                </div>
+                <div class="media-content">
+                  <strong>{{ props.option.title || props.option.name }}</strong>
+                  <br>
+                  <small>
+                    <span v-if="getYear(props.option.release_date || props.option.first_air_date)">
+                      {{ getYear(props.option.release_date || props.option.first_air_date) }}
+                    </span>
+                  </small>
+                </div>
               </div>
-              <div class="media-content">
-                <strong>{{ props.option.title || props.option.name }}</strong>
-                <br>
-                <small>
-                  <span v-if="getYear(props.option.release_date || props.option.first_air_date)">
-                    {{ getYear(props.option.release_date || props.option.first_air_date) }}
-                  </span>
-                </small>
-              </div>
-            </div>
-          </template>
-        </b-autocomplete>
-      </b-field>
+            </template>
+          </b-autocomplete>
+        </b-field>
+        <b-field
+          class="column is-one-fifth pb-0 mb-0"
+          label="Ignore Notion?"
+        >
+          <b-switch
+            v-model="ignoreNotion"
+            type="is-success"
+          />
+        </b-field>
+      </div>
+
       <div
         v-if="selected"
       >
+        <div class="buttons mb-5">
+          <b-button
+            type="is-success has-text-weight-bold"
+            expanded
+            @click="saveItem()"
+          >
+            Save
+          </b-button>
+        </div>
         <div class="columns mb-0">
           <div class="column is-one-third">
             <span
-              v-if="selectedPoster"
               :class="{'is-clickable' : selected.posters.length > 1}"
               @click="selected.posters.length > 1 ? openPosterModal() : null"
             >
               <b-image
-                :src="`https://image.tmdb.org/t/p/original${selectedPoster}`"
+                v-if="selectedPoster"
+                :src="`${selectedPoster}`"
                 :alt="`Poster for ${selected.title}`"
               />
+              <b-icon
+                v-else-if="selected.media_type==='movie'"
+                icon="filmstrip"
+                size="is-large"
+              />
+              <b-icon
+                v-else-if="selected.media_type==='tv'"
+                icon="television"
+                size="is-large"
+              />
             </span>
-            <b-icon
-              v-else-if="selected.media_type==='movie'"
-              icon="filmstrip"
-              size="is-large"
-            />
-            <b-icon
-              v-else-if="selected.media_type==='tv'"
-              icon="television"
-              size="is-large"
-            />
           </div>
           <div class="column is-two-thirds">
             <h2 class="is-size-2 movie-title level level-left mb-1">
@@ -104,8 +128,46 @@
                 {{ makeGrammaticalList(selected.directors) }}
               </span>
             </p>
-            <p class="mt-3">
+            <p class="mt-3 mb-4">
               {{ selected.overview }}
+            </p>
+            <div v-if="(selected.tags || []).length">
+              <p class="is-size-4 level mb-1 level">
+                Tags
+              </p>
+              <p>
+                <b-tag
+                  v-for="(tag, index) in selected.tags"
+                  :key="`cast_${index}`"
+                  class="m-1"
+                  :type="colors[(index+3)%colors.length]"
+                >
+                  {{ tag }}
+                </b-tag>
+              </p>
+            </div>
+            <div v-if="(selected.streamingService || []).length">
+              <p class="is-size-4 level mb-1 level">
+                Streaming Services
+              </p>
+              <p>
+                <b-tag
+                  v-for="(tag, index) in selected.streamingService"
+                  :key="`cast_${index}`"
+                  class="m-1"
+                  :type="colors[(index+4)%colors.length]"
+                >
+                  {{ tag }}
+                </b-tag>
+              </p>
+            </div>
+            <p
+              v-if="selected.last_watched"
+              class="mt-3 mb-4"
+            >
+              <strong>
+                Last Watched: {{ formatDate(selected.last_watched) }}
+              </strong>
             </p>
             <div class="is-align-content-end is-flex is-flex-direction-row-reverse">
               <b-button
@@ -177,7 +239,7 @@
             </b-field>
           </p>
         </div>
-        <div v-if="selected.writers.length">
+        <div>
           <p class="is-size-3 level mb-1 mt-2 level">
             Writers
             <span class="level-right">
@@ -216,14 +278,24 @@
             </span>
           </p>
           <p v-if="!editingWriters">
-            <b-tag
-              v-for="(person, index) in selected.writers"
-              :key="`cast_${index}`"
-              class="m-1 tag is-light"
-              :class="colors[(index+2)%colors.length]"
-            >
-              {{ person }}
-            </b-tag>
+            <span v-if="selected.writers.length">
+              <b-tag
+                v-for="(person, index) in selected.writers"
+                :key="`cast_${index}`"
+                class="m-1 tag"
+                :class="colors[(index+2)%colors.length]"
+              >
+                {{ person }}
+              </b-tag>
+            </span>
+            <span v-else>
+              <b-tag
+                class="m-1 tag"
+                :class="colors[(2)%colors.length]"
+              >
+                None
+              </b-tag>
+            </span>
           </p>
           <p v-else>
             <b-field
@@ -255,10 +327,15 @@
         <div class="card-content">
           <div class="columns mb-0">
             <div class="column is-one-third relative">
-              <div class="fixed">
+              <div class="fixed top">
                 <b-image
-                  :src="`https://image.tmdb.org/t/p/original${newPoster}`"
+                  v-if="newPoster"
+                  :src="`${newPoster}`"
                   :alt="`Poster for ${selected.title}`"
+                />
+                <b-icon
+                  v-else
+                  icon="television"
                 />
               </div>
             </div>
@@ -272,11 +349,11 @@
                   v-for="(poster_details, j) in selected.posters.slice(i*perRow, i*perRow+perRow)"
                   :key="`poster_row${i}_item_${j}`"
                   class="column is-one-third selectable"
-                  :class="{ 'selected-poster' : newPoster === poster_details.file_path }"
-                  @click="selectPoster(poster_details.file_path)"
+                  :class="{ 'selected-poster' : newPoster === `https://image.tmdb.org/t/p/original${poster_details.file_path}` }"
+                  @click="selectPoster(`https://image.tmdb.org/t/p/original${poster_details.file_path}`)"
                 >
                   <b-image
-                    :src="`https://image.tmdb.org/t/p/original/${poster_details.file_path}`"
+                    :src="`https://image.tmdb.org/t/p/original${poster_details.file_path}`"
                     :alt="`Poster for ${selected.title}`"
                   />
                 </div>
@@ -285,7 +362,7 @@
           </div>
         </div>
         <div class="p-3">
-          <span class="level-right">
+          <span class="level-right fixed bottom">
             <b-button
               class="is-white mr-2"
               @click="isPosterModalActive=false"
@@ -311,7 +388,7 @@
     </b-modal>
 
     <b-modal
-      v-if="selected && selected.posters.length > 1"
+      v-if="selected"
       v-model="isDetailsModalActive"
       width="80%"
       scroll="keep"
@@ -376,6 +453,36 @@
               @input="handleTagInput($event, 'newDirectors')"
             />
           </b-field>
+          <b-field
+            label="Tags"
+            type="is-success"
+          >
+            <b-taginput
+              :value="newTags"
+              @input="handleTagInput($event, 'newTags')"
+            />
+          </b-field>
+          <b-field
+            label="Streaming Services"
+            type="is-success"
+          >
+            <b-taginput
+              :value="newStreamingService"
+              @input="handleTagInput($event, 'newStreamingService')"
+            />
+          </b-field>
+          <b-field label="Last Watched">
+            <b-datepicker
+              v-model="newLastWatched"
+              placeholder="Click to select..."
+              icon="calendar-today"
+              :max-date="new Date()"
+              :icon-right="selected ? 'close-circle' : ''"
+              icon-right-clickable
+              trap-focus
+              @icon-right-click="newLastWatched = null"
+            />
+          </b-field>
           <b-field label="Overview">
             <b-input
               v-model="newOverview"
@@ -421,8 +528,8 @@ export default {
   name: 'IndexPage',
   data () {
     return {
+      ignoreNotion: false,
       data: [],
-      tags: [],
       selectedItem: null,
       isFetching: false,
       perRow: 3,
@@ -434,13 +541,16 @@ export default {
       isPosterModalActive: false,
       isDetailsModalActive: false,
 
+      newTags: [],
       newCast: [],
       newWriters: [],
       newPoster: null,
       newTitle: null,
       newReleaseDate: null,
+      newLastWatched: null,
       newOverview: null,
       newDirectors: [],
+      newStreamingService: [],
       newMediaType: null
     }
   },
@@ -481,6 +591,7 @@ export default {
             const releaseDate = details.release_date || details.first_air_date
             details.media_type = val.media_type
             details.release_date = this.getYear(releaseDate)
+            details.poster_path = `https://image.tmdb.org/t/p/original/${details.poster_path}`
             if (val.media_type === 'tv') {
               primary.push(...details.created_by.map(person => person.name))
             } else {
@@ -497,7 +608,7 @@ export default {
               .slice(0, 8)
               .map(person => person.name)
 
-            this.selectedItem = {
+            const selectedItem = {
               ...details,
               cast: topCast,
               directors: primary,
@@ -515,6 +626,46 @@ export default {
               originalOverview: details.overview,
               originalTitle: details.title
             }
+            let notionData = []
+            notionData = this.$axios.post('https://viewing.rmccarthy.dev/api/get', {
+              title: selectedItem.title || '',
+              release_date: selectedItem.release_date || 0,
+              media_type: selectedItem.media_type || ''
+            })
+
+            return Promise.all([selectedItem, notionData])
+          })
+          .then((results) => {
+            const selectedItem = results[0]
+            if (!this.ignoreNotion && ((results[1] || {}).data || []).length) {
+              const item = results[1].data[0]
+
+              selectedItem.cast = item.properties.Actors.multi_select.map(actor => actor.name)
+              selectedItem.originalCast = selectedItem.cast
+              selectedItem.directors = item.properties['Director/Creator'].multi_select.map(director => director.name)
+              selectedItem.originalDirectors = selectedItem.directors
+              selectedItem.release_date = item.properties['Release Year'].number
+              selectedItem.originalReleaseDate = selectedItem.release_date
+
+              selectedItem.tags = item.properties.Tags.multi_select.map(tag => tag.name)
+              selectedItem.originalTags = selectedItem.tags
+
+              selectedItem.streamingService = item.properties['Streaming Service'].multi_select.map(ss => ss.name)
+              selectedItem.originalStreamingService = selectedItem.streamingService
+
+              const date = (item.properties['Last Watched'].date || {}).start || null
+              selectedItem.last_watched = date ? new Date(date) : null
+              selectedItem.originalLastWatched = selectedItem.last_watched
+              selectedItem.poster_path = ((item.cover || {}).external || {}).url
+
+              selectedItem.overview = ((((item.properties.Summary || {}).rich_text || [])[0] || {}).text || {}).content || ''
+              selectedItem.originalOverview = selectedItem.overview
+            }
+
+            if (((results[1] || {}).data || []).length) {
+              selectedItem.notionPage = results[1].data[0]
+            }
+            this.selectedItem = selectedItem
             this.selectedPoster = this.selectedItem.poster_path
           })
           .catch((error) => {
@@ -525,15 +676,120 @@ export default {
             this.isFetching = false
           })
       }
+    },
+    formattedItem () {
+      // Start with existing notion page if it exists
+      const item = {
+        page: {
+          archived: false
+        }
+      }
+
+      if (this.selectedItem.notionPage) {
+        item.id = this.selectedItem.notionPage.id
+      }
+
+      // Add URL for poster if available
+      if (this.selectedPoster) {
+        item.page.cover = {
+          type: 'external',
+          external: {
+            url: this.selectedPoster
+          }
+        }
+      } else {
+        item.cover = null
+      }
+      const type = this.selectedItem.media_type
+      const mediaType = type === 'tv' ? 'TV Series' : type === 'movie' ? 'Movie' : null
+      item.page.properties = {
+        Actors: {
+          type: 'multi_select',
+          multi_select: (this.selectedItem.cast || []).map(name => ({ name }))
+        },
+        Summary: {
+          type: 'rich_text',
+          rich_text: [
+            {
+              text: {
+                content: this.selectedItem.overview
+              }
+            }
+          ]
+        },
+        Tags: {
+          type: 'multi_select',
+          multi_select: (this.selectedItem.tags || []).map(name => ({ name }))
+        },
+        Title: {
+          type: 'title',
+          title: [
+            {
+              text: {
+                content: this.selectedItem.title
+              }
+            }
+          ]
+        },
+        Type: {
+          type: 'select',
+          select: {
+            name: mediaType
+          }
+        },
+        Writers: {
+          type: 'multi_select',
+          multi_select: (this.selectedItem.writers || []).map(name => ({ name }))
+        }
+      }
+      item.page.properties['Director/Creator'] = {
+        type: 'multi_select',
+        multi_select: (this.selectedItem.directors || []).map(name => ({ name }))
+      }
+      item.page.properties['Last Watched'] = {
+        type: 'date',
+        date: null
+      }
+
+      item.page.properties['Release Year'] = {
+        type: 'number',
+        number: this.selectedItem.release_date
+      }
+      item.page.properties['Streaming Service'] = {
+        type: 'multi_select',
+        multi_select: (this.selectedItem.streamingService || []).map(name => ({ name }))
+      }
+      return item
     }
   },
   methods: {
+    async saveItem () {
+      const path = ((this.selectedItem || {}).notionPage || {}).id ? 'update' : 'create'
+      const resp = await this.$axios.post(`https://viewing.rmccarthy.dev/api/${path}`, this.formattedItem)
+      this.selectedItem.notionPage = resp.data
+    },
+    formatDate (date) {
+      function join (t, a, s) {
+        function format (m) {
+          const f = new Intl.DateTimeFormat('en', m)
+          return f.format(t)
+        }
+        return a.map(format).join(s)
+      }
+
+      const a = [{ day: 'numeric' }, { month: 'long' }, { year: 'numeric' }]
+      const s = join(date, a, ' ')
+      return s
+    },
     openDetailsModal () {
       this.newTitle = this.selectedItem.title
       this.newReleaseDate = this.selectedItem.release_date
       this.newOverview = this.selectedItem.overview
       this.newDirectors = this.selectedItem.directors
       this.newMediaType = this.selectedItem.media_type
+      this.newTags = this.selectedItem.tags
+      this.newLastWatched = this.selectedItem.last_watched
+      this.newStreamingService = this.selectedItem.streamingService
       this.isDetailsModalActive = true
     },
     resetDetails () {
@@ -542,14 +798,21 @@ export default {
       this.selectedItem.overview = this.selectedItem.originalOverview
       this.selectedItem.directors = this.selectedItem.originalDirectors
       this.selectedItem.media_type = this.selectedItem.originalMediaType
+      this.selectedItem.tags = this.selectedItem.originalTags
+      this.selectedItem.last_watched = this.selectedItem.originalLastWatched
+      this.selectedItem.streamingService = this.selectedItem.originalStreamingService
       this.isDetailsModalActive = false
     },
-    saveDetails () {
+    async saveDetails () {
       this.selectedItem.title = this.newTitle
       this.selectedItem.release_date = this.newReleaseDate
       this.selectedItem.overview = this.newOverview
       this.selectedItem.directors = this.newDirectors
       this.selectedItem.media_type = this.newMediaType
+      this.selectedItem.tags = this.newTags
+      this.selectedItem.last_watched = this.newLastWatched
+      this.selectedItem.streamingService = this.newStreamingService
+      await this.saveItem()
       this.isDetailsModalActive = false
     },
     openPosterModal () {
@@ -561,24 +824,27 @@ export default {
       this.selectedPoster = this.selectedItem.poster_path
       this.isPosterModalActive = false
     },
-    savePoster () {
+    async savePoster () {
       this.selectedPoster = this.newPoster
+      await this.saveItem()
       this.isPosterModalActive = false
     },
     editWriters () {
       this.newWriters = this.selectedItem.writers
       this.editingWriters = true
     },
-    saveWriters () {
+    async saveWriters () {
       this.selectedItem.writers = this.newWriters
+      await this.saveItem()
       this.editingWriters = false
     },
     editCast () {
       this.newCast = this.selectedItem.cast
       this.editingCast = true
     },
-    saveCast () {
+    async saveCast () {
       this.selectedItem.cast = this.newCast
+      await this.saveItem()
       this.editingCast = false
     },
     handleTagInput (arr, field) {
@@ -647,8 +913,13 @@ export default {
   }
   .fixed {
     position: sticky;
-    top:0;
     width: 100%;
+  }
+  .bottom {
+    bottom: 0
+  }
+  .top {
+    top: 0
   }
   .posters-card .card-content {
     max-height: 70vh;
