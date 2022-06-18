@@ -30,7 +30,6 @@ var rootCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		r := routes.Setup()
 		listenAddr := net.JoinHostPort(routes.GoDotEnvVariable("HTTP_HOST"), routes.GoDotEnvVariable("PORT"))
-		log.Info().Msgf("Listen: %s", listenAddr)
 		log.Fatal().Err(http.ListenAndServe(listenAddr, r)).Msg("failed to start server")
 		return nil
 	},
