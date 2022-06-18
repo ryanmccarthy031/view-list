@@ -14,7 +14,7 @@ import (
 
 type Config struct {
 	Hostname string `env:"HTTP_HOST"`
-	Port     string `env:"HTTP_PORT,default=8080"`
+	Port     string `env:"PORT,default=8080"`
 }
 
 var c Config
@@ -29,7 +29,7 @@ var rootCmd = &cobra.Command{
 	Use: "view-list-api",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		r := routes.Setup()
-		listenAddr := net.JoinHostPort(routes.GoDotEnvVariable("HTTP_HOST"), routes.GoDotEnvVariable("HTTP_PORT"))
+		listenAddr := net.JoinHostPort(routes.GoDotEnvVariable("HTTP_HOST"), routes.GoDotEnvVariable("PORT"))
 		log.Info().Msgf("Listen: %s", listenAddr)
 		log.Fatal().Err(http.ListenAndServe(listenAddr, r)).Msg("failed to start server")
 		return nil
